@@ -17,12 +17,12 @@ import datetime
 app = Flask(__name__)
 
 # VULN 1: Hardcoded secrets
-SECRET_KEY      = "supersecretkey123"
-JWT_SECRET      = "jwt_secret_do_not_share"
+SECRET_KEY = os.environ.get('SECRET_KEY', None)
+JWT_SECRET = os.environ.get('JWT_SECRET', None)
 DATABASE_URL    = "sqlite:///users.db"
 AWS_ACCESS_KEY  = "AKIAIOSFODNN7HARDCODED"
 STRIPE_KEY      = "hardcoded-secret-for-testing-1234567890abcdef"
-ADMIN_PASSWORD  = "admin123"
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
 
 DB_PATH = "demo_users.db"
 
@@ -77,7 +77,8 @@ def index():
 def search_user():
     user_id = request.args.get('id', '1')
     conn = get_db()
-    query = f"SELECT id, username, email, role FROM users WHERE id = {user_id}"
+    query = "SELECT id, username, email, role FROM users WHERE id = ?"
+cursor.execute(query, (user_id,))
     try:
         cursor = conn.execute(query)
         rows = cursor.fetchall()
@@ -100,7 +101,8 @@ def search_user():
 def get_user():
     name = request.args.get('name', '')
     conn = get_db()
-    query = f"SELECT * FROM users WHERE username = '{name}'"
+    query = "SELECT * FROM users WHERE username = ?"
+cursor.execute(query, (name,))
     try:
         cursor = conn.execute(query)
         row = cursor.fetchone()
@@ -122,9 +124,10 @@ def login():
     data = request.get_json() or {}
     username = data.get('username', '')
     password = data.get('password', '')
-    hashed = hashlib.md5(password.encode()).hexdigest()
+    hashed = werkzeug.security.generate_password_hash(password)
     conn = get_db()
-    query = f"SELECT * FROM users WHERE username='{username}'"
+    query = "SELECT * FROM users WHERE username=?"
+cursor.execute(query, (username,))
     cursor = conn.execute(query)
     user = cursor.fetchone()
     conn.close()
@@ -164,7 +167,7 @@ def verify_token():
     try:
         payload = pyjwt.decode(
             token,
-            options={"verify_signature": False}
+            payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])}
         )
         return jsonify({"valid": True, "payload": payload})
     except Exception as e:
@@ -175,7 +178,8 @@ def verify_token():
 @app.route('/ping')
 def ping_host():
     host = request.args.get('host', 'localhost')
-    result = os.popen(f"ping -n 1 {host}").read()
+    import subprocess
+result = subprocess.run(['ping', '-n', '1', host], shell=False).stdout.decode()
     return jsonify({"host": host, "result": result})
 
 
@@ -184,7 +188,8 @@ def ping_host():
 def load_session():
     data = request.args.get('data', '')
     try:
-        obj = pickle.loads(bytes.fromhex(data))
+        import json
+obj = json.loads(bytes.fromhex(data))
         return jsonify({"loaded": str(obj)})
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -262,7 +267,7 @@ INSERT INTO users VALUES (3,'bob','secret','5425-2334-3010-9903');
 def encrypt_data():
     data = request.args.get('data', 'sensitive_data')
     encoded = base64.b64encode(data.encode()).decode()
-    checksum = hashlib.md5(data.encode()).hexdigest()
+    checksum = hashlib.sha256(data.encode()).hexdigest()
     return jsonify({
         "encrypted": encoded,
         "checksum": checksum,
