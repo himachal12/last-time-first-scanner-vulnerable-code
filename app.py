@@ -5,7 +5,7 @@ DELIBERATELY VULNERABLE. LOCAL DEMO ONLY.
 NEVER DEPLOY THIS TO THE INTERNET.
 """
 
-from flask import Flask, request, redirect, jsonify, Response
+from flask import Flask, request, redirect, jsonify, Response, render_template_string
 import sqlite3
 import hashlib
 import os
@@ -193,8 +193,17 @@ def load_session():
 # VULN 8: Unvalidated redirect
 @app.route('/redirect')
 def redirect_user():
-    url = request.args.get('url', '/')
-    return redirect(url)
+    return redirect(request.args.get('url'))
+
+
+# VULN 9: Reflected XSS / server-side template injection
+@app.route('/preview')
+def preview_comment():
+    comment = request.args.get('comment', '')
+    return render_template_string(f"""
+        <h1>Support Ticket Preview</h1>
+        <div class="comment">{comment}</div>
+    """)
 
 
 # NUCLEI TRIGGER 1: Exposed .env
@@ -257,7 +266,7 @@ INSERT INTO users VALUES (3,'bob','secret','5425-2334-3010-9903');
     return Response(backup_content, mimetype='text/plain', status=200)
 
 
-# VULN 9: Weak crypto (MD5 for integrity)
+# VULN 10: Weak crypto (MD5 for integrity)
 @app.route('/encrypt')
 def encrypt_data():
     data = request.args.get('data', 'sensitive_data')
