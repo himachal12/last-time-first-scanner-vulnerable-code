@@ -17,12 +17,12 @@ import datetime
 app = Flask(__name__)
 
 # VULN 1: Hardcoded secrets
-SECRET_KEY      = "supersecretkey123"
+SECRET_KEY = os.environ["SECRET_KEY"]
 JWT_SECRET      = "jwt_secret_do_not_share"
 DATABASE_URL    = "sqlite:///users.db"
-AWS_ACCESS_KEY  = "AKIAIOSFODNN7HARDCODED"
-STRIPE_KEY      = "hardcoded-secret-for-testing-1234567890abcdef"
-ADMIN_PASSWORD  = "admin123"
+AWS_ACCESS_KEY = os.environ["AWS_ACCESS_KEY"]
+STRIPE_KEY = os.environ["STRIPE_KEY"]
+ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
 
 DB_PATH = "demo_users.db"
 
