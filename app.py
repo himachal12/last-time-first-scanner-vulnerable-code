@@ -17,12 +17,12 @@ import datetime
 app = Flask(__name__)
 
 # VULN 1: Hardcoded secrets
-SECRET_KEY      = "supersecretkey123"
+SECRET_KEY = os.environ.get('SECRET_KEY', None)
 JWT_SECRET      = "jwt_secret_do_not_share"
 DATABASE_URL    = "sqlite:///users.db"
 AWS_ACCESS_KEY  = "AKIAIOSFODNN7HARDCODED"
 STRIPE_KEY      = "hardcoded-secret-for-testing-1234567890abcdef"
-ADMIN_PASSWORD  = "admin123"
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
 
 DB_PATH = "demo_users.db"
 
@@ -184,7 +184,8 @@ def ping_host():
 def load_session():
     data = request.args.get('data', '')
     try:
-        obj = pickle.loads(bytes.fromhex(data))
+        import json
+        obj = json.loads(bytes.fromhex(data))
         return jsonify({"loaded": str(obj)})
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -271,7 +272,8 @@ INSERT INTO users VALUES (3,'bob','secret','5425-2334-3010-9903');
 def encrypt_data():
     data = request.args.get('data', 'sensitive_data')
     encoded = base64.b64encode(data.encode()).decode()
-    checksum = hashlib.md5(data.encode()).hexdigest()
+    import hashlib
+    checksum = hashlib.sha256(data.encode()).hexdigest()
     return jsonify({
         "encrypted": encoded,
         "checksum": checksum,
