@@ -17,12 +17,12 @@ import datetime
 app = Flask(__name__)
 
 # VULN 1: Hardcoded secrets
-SECRET_KEY = os.environ.get('SECRET_KEY', None)
+SECRET_KEY      = "supersecretkey123"
 JWT_SECRET      = "jwt_secret_do_not_share"
 DATABASE_URL    = "sqlite:///users.db"
 AWS_ACCESS_KEY  = "AKIAIOSFODNN7HARDCODED"
 STRIPE_KEY      = "hardcoded-secret-for-testing-1234567890abcdef"
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
+ADMIN_PASSWORD  = "admin123"
 
 DB_PATH = "demo_users.db"
 
@@ -184,8 +184,7 @@ def ping_host():
 def load_session():
     data = request.args.get('data', '')
     try:
-        import json
-        obj = json.loads(bytes.fromhex(data))
+        obj = pickle.loads(bytes.fromhex(data))
         return jsonify({"loaded": str(obj)})
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -272,8 +271,7 @@ INSERT INTO users VALUES (3,'bob','secret','5425-2334-3010-9903');
 def encrypt_data():
     data = request.args.get('data', 'sensitive_data')
     encoded = base64.b64encode(data.encode()).decode()
-    import hashlib
-    checksum = hashlib.sha256(data.encode()).hexdigest()
+    checksum = hashlib.md5(data.encode()).hexdigest()
     return jsonify({
         "encrypted": encoded,
         "checksum": checksum,
@@ -287,3 +285,4 @@ if __name__ == '__main__':
     print("🚨 SHIELDLABS DEMO TARGET — http://localhost:5000")
     print("=" * 60)
     app.run(debug=True, host='0.0.0.0', port=5000)
+
