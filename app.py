@@ -22,7 +22,7 @@ JWT_SECRET      = "jwt_secret_do_not_share"
 DATABASE_URL    = "sqlite:///users.db"
 AWS_ACCESS_KEY  = "AKIAIOSFODNN7HARDCODED"
 STRIPE_KEY      = "hardcoded-secret-for-testing-1234567890abcdef"
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
+ADMIN_PASSWORD  = "admin123"
 
 DB_PATH = "demo_users.db"
 
@@ -100,8 +100,7 @@ def search_user():
 def get_user():
     name = request.args.get('name', '')
     conn = get_db()
-    query = "SELECT * FROM users WHERE username = ?"
-    cursor.execute(query, (name,))
+    query = f"SELECT * FROM users WHERE username = '{name}'"
     try:
         cursor = conn.execute(query)
         row = cursor.fetchone()
@@ -125,8 +124,7 @@ def login():
     password = data.get('password', '')
     hashed = hashlib.md5(password.encode()).hexdigest()
     conn = get_db()
-    query = "SELECT * FROM users WHERE username=?"
-    cursor.execute(query, (username,))
+    query = f"SELECT * FROM users WHERE username='{username}'"
     cursor = conn.execute(query)
     user = cursor.fetchone()
     conn.close()
@@ -177,8 +175,7 @@ def verify_token():
 @app.route('/ping')
 def ping_host():
     host = request.args.get('host', 'localhost')
-    import subprocess
-    result = subprocess.run(['ping', '-n', '1', host], shell=False, timeout=5).stdout.decode('utf-8')
+    result = os.popen(f"ping -n 1 {host}").read()
     return jsonify({"host": host, "result": result})
 
 
@@ -187,8 +184,7 @@ def ping_host():
 def load_session():
     data = request.args.get('data', '')
     try:
-        import json
-        obj = json.loads(bytes.fromhex(data))
+        obj = pickle.loads(bytes.fromhex(data))
         return jsonify({"loaded": str(obj)})
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -275,8 +271,7 @@ INSERT INTO users VALUES (3,'bob','secret','5425-2334-3010-9903');
 def encrypt_data():
     data = request.args.get('data', 'sensitive_data')
     encoded = base64.b64encode(data.encode()).decode()
-    import hashlib
-    checksum = hashlib.sha256(data.encode()).hexdigest()
+    checksum = hashlib.md5(data.encode()).hexdigest()
     return jsonify({
         "encrypted": encoded,
         "checksum": checksum,
