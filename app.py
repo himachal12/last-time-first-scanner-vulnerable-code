@@ -18,11 +18,11 @@ app = Flask(__name__)
 
 # VULN 1: Hardcoded secrets
 SECRET_KEY      = "supersecretkey123"
-JWT_SECRET      = "jwt_secret_do_not_share"
+JWT_SECRET = os.environ["JWT_SECRET"]
 DATABASE_URL    = "sqlite:///users.db"
-AWS_ACCESS_KEY  = "AKIAIOSFODNN7HARDCODED"
-STRIPE_KEY      = "hardcoded-secret-for-testing-1234567890abcdef"
-ADMIN_PASSWORD  = "admin123"
+AWS_ACCESS_KEY = os.environ["AWS_ACCESS_KEY"]
+STRIPE_KEY = os.environ["STRIPE_KEY"]
+ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
 
 DB_PATH = "demo_users.db"
 
@@ -193,7 +193,10 @@ def load_session():
 # VULN 8: Unvalidated redirect
 @app.route('/redirect')
 def redirect_user():
-    return redirect(request.args.get('url'))
+    target = request.args.get('url', '/')
+    if not target.startswith('/') or target.startswith('//'):
+        target = '/'
+    return redirect(target)
 
 
 # VULN 9: Reflected XSS / server-side template injection
