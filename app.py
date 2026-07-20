@@ -20,9 +20,9 @@ app = Flask(__name__)
 SECRET_KEY      = "supersecretkey123"
 JWT_SECRET      = "jwt_secret_do_not_share"
 DATABASE_URL    = "sqlite:///users.db"
-AWS_ACCESS_KEY = os.environ["AWS_ACCESS_KEY"]
-STRIPE_KEY = os.environ["STRIPE_KEY"]
-ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
+AWS_ACCESS_KEY  = "AKIAIOSFODNN7HARDCODED"
+STRIPE_KEY      = "hardcoded-secret-for-testing-1234567890abcdef"
+ADMIN_PASSWORD  = "admin123"
 
 DB_PATH = "demo_users.db"
 
@@ -193,10 +193,7 @@ def load_session():
 # VULN 8: Unvalidated redirect
 @app.route('/redirect')
 def redirect_user():
-    target = request.args.get('url', '/')
-    if not target.startswith('/') or target.startswith('//'):
-        target = '/'
-    return redirect(target)
+    return redirect(request.args.get('url'))
 
 
 # VULN 9: Reflected XSS / server-side template injection
@@ -288,4 +285,3 @@ if __name__ == '__main__':
     print("🚨 SHIELDLABS DEMO TARGET — http://localhost:5000")
     print("=" * 60)
     app.run(debug=True, host='0.0.0.0', port=5000)
-
